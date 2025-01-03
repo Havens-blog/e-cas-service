@@ -1,0 +1,251 @@
+version: '3.8'
+# 声明一个名为network的networks,subnet为network的子网地址,默认网关是172.21.0.1
+networks:
+  network:
+    ipam:
+      driver: default
+      config:
+        - subnet: '172.21.0.0/16'
+## 遇到容器不停重启，首先怀疑是挂载目录读写执行权限问题
+services:
+  #### mysql ####
+  mysql:
+    image: bitnami/mysql:8.0
+    container_name: mysql
+    #restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - /usr/local/volumes/mysql:/bitnami/mysql
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_USER=root
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=go-layout
+      - MYSQL_CHARACTER_SET=utf8mb4
+      - MYSQL_COLLATE=utf8mb4_general_ci
+      - MYSQL_AUTHENTICATION_PLUGIN=mysql_native_password
+    networks:
+      network:
+        ipv4_address: 172.21.0.11
+
+  #### redis ####
+  redis:
+    image: redis:7.0.0
+    container_name: redis
+    #restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass "123456"
+    volumes:
+      - /usr/local/volumes/redis/redis.conf:/etc/redis.conf
+      - /usr/local/volumes/redis/data:/data
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      network:
+        ipv4_address: 172.21.0.12
+
+  #### consul ####
+  ### 认证访问设置（https://xiaohubai.github.io/docs/docker-compose）
+  consul:
+    image: bitnami/consul:1.18.0
+    container_name: consul
+    #restart: always
+    ports:
+      - "8300:8300"
+      - "8500:8500"
+      - "8600:8600/udp"
+    volumes:
+      - /usr/local/volumes/consul:/bitnami/consul
+    environment:
+      - TZ=Asia/Shanghai
+      - CONSUL_AGENT_MODE=server
+      - CONSUL_ENABLE_UI=true
+      - CONSUL_BOOTSTRAP_EXPECT=1
+      - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
+    networks:
+      network:
+        ipv4_address: 172.21.0.13
+
+  #### jaeger ####
+  jaeger:
+    image: jaegertracing/all-in-one:1.55.0
+    container_name: jaeger
+    #restart: always
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "14268:14268"
+      - "9411:9411"
+      - "16686:16686"
+    environment:
+      - TZ=Asia/Shanghai
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    networks:
+      network:
+        ipv4_address: 172.21.0.14
+
+  #### prometheus ####
+  ## 注意数据集data要保证其他用户可读写，直接设置777,默认存储15天,可以远程读取es持久化存储
+  prometheus:
+    image: bitnami/prometheus:2.51.0
+    container_name: prometheus
+    #restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - /usr/local/volumes/prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml
+      - /usr/local/volumes/prometheus/data:/opt/bitnami/prometheus/data
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      network:
+        ipv4_address: 172.21.0.15
+
+  #### grafana ####
+  ##注意数据集data要保证其他用户可读写，直接设置777
+  ## grafana重设密码
+  ## docker exec --user 472 -it grafana /bin/bash
+  ## cd /usr/share/grafana/bin
+  ## ./grafana-cli admin reset-admin-password admin
+  grafana:
+    image: bitnami/grafana:10.4.0
+    container_name: grafana
+    #restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - /usr/local/volumes/grafana/data:/opt/bitnami/grafana/data
+      - /usr/local/volumes/grafana/grafana.ini:/opt/bitnami/grafana/conf/grafana.ini
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - prometheus
+    networks:
+      network:
+        ipv4_address: 172.21.0.16
+
+  node-exporter:
+    image: bitnami/node-exporter:1.8.0
+    container_name: node-exporter
+    #restart: always
+    ports:
+      - "9100:9100"
+    networks:
+      network:
+        ipv4_address: 172.21.0.17
+
+  #### pyroscope ####
+  pyroscope:
+    image: pyroscope/pyroscope:latest
+    container_name: pyroscope
+    #restart: always
+    ports:
+      - 4040:4040
+    command:
+      - server
+    volumes:
+      - /usr/local/volumes/pyroscope/server.yml:/etc/pyroscope/server.yml
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      network:
+        ipv4_address: 172.21.0.18
+
+  #### elasticsearch ####
+  # 不停重启，数据卷的data和ik目录权限应root 777权限
+  # ！！更改版本要es kibana和分词器ik保持一致
+  # 增加安全认证：在配置文件挂在或者容器内的elasticsearch.yml添加：
+  # xpack.security.enabled: true
+  # xpack.license.self_generated.type: basic
+  # xpack.security.transport.ssl.enabled: true
+  # 设置密码:docker exec -it elasticsearch bash
+  # ./bin/elasticsearch-setup-passwords interactive 回车输入y，填写密码，重启容器
+  # 用户名elastic;密码是你设置的
+  elasticsearch:
+    image: elasticsearch:7.17.0
+    container_name: elasticsearch
+    #restart: always
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - /usr/local/volumes/elasticsearch/data:/usr/share/elasticsearch/data
+      - /usr/local/volumes/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - /usr/local/volumes/elasticsearch/plugins:/usr/share/elasticsearch/plugins
+    environment:
+      - TZ=Asia/Shanghai
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    networks:
+      network:
+        ipv4_address: 172.21.0.19
+
+  #### kibana ####
+  kibana:
+    image: kibana:7.17.0
+    container_name: kibana
+    #restart: always
+    ports:
+      - "5601:5601"
+    volumes:
+      - /usr/local/volumes/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    environment:
+      - elasticsearch.hosts=http://172.21.0.19:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      network:
+        ipv4_address: 172.21.0.20
+
+  #### kafka ####
+  # kafka 不停重启,要考虑权限问题和挂载的kafka/data要删除
+  kafka:
+    image: bitnami/kafka:3.7.0
+    container_name: kafka
+    #restart: always
+    user: root
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+    volumes:
+      - /usr/local/volumes/kafka:/bitnami/kafka
+    environment:
+      - TZ=Asia/Shanghai
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_KRAFT_CLUSTER_ID=LelM2dIFQkiUFvXCEcqRWA
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_HEAP_OPTS=-Xmx512M -Xms256M
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+      # 消息保留时长（毫秒），保留7天
+      - KAFKA_LOG_RETENTION_MS=604800000
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://www.wslhost.com:9092
+    networks:
+      network:
+        ipv4_address: 172.21.0.21
+  ###kafka-ui###
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    #restart: always
+    ports:
+      - '8080:8080'
+    depends_on:
+      - kafka
+    environment:
+      - TZ=Asia/Shanghai
+      - KAFKA_CLUSTERS_0_NAME=kafkaCluster
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    networks:
+      network:
+        ipv4_address: 172.21.0.22

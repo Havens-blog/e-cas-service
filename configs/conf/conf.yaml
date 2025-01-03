@@ -1,0 +1,123 @@
+global:
+  appName: go-grpc-layout
+  env: dev
+  version: 0.0.1
+  id: 127.0.0.1
+server:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 1s
+  grpc:
+    addr: 0.0.0.0:9000
+    timeout: 1s
+data:
+  mysql:
+    driver: mysql
+    source: root:123456@tcp(127.0.0.1:3306)/go-layout?charset=utf8mb4&parseTime=True&loc=Local
+  redis:
+    db: 0
+    addr: 127.0.0.1:6379
+    password: "123456"
+    dialTimeout: 1s
+    readTimeout: 0.4s
+    writeTimeout: 0.6s
+  es:
+    address: [http://127.0.0.1:9200]
+    username: elastic
+    password: 1qaz!QAZ
+
+jwt:
+  signingKey: some_jwt_sign_key
+  expiresTime: 604800
+  bufferTime: 86400
+  issuer: xiaohubai@outlook.com
+trace:
+  endpoint: http://127.0.0.1:14268/api/traces
+
+consul:
+  host: 127.0.0.1:8500
+  scheme: http
+  healthCheck: true
+  token: "8501f1da-ad0f-401c-9694-6ac1f8ff1fc4"
+  kv:
+    dictPath: dev/dict.json
+  discovery:
+    goGrpcLayout: "discovery://default/go-grpc-layout"
+
+zap:
+  level: "info"
+  format: "json"
+  filename: "./logs"
+  maxSize: 1
+  maxBackups: 3
+  maxAge: 7
+  compress: false
+
+captcha:
+  height: 80
+  width: 240
+  length: 6
+  maxSkew: 0.7
+  dotCount: 80
+
+casbin:
+  path: "./rbac_model.conf"
+
+limiter:
+  rate: 0 # 0:不限流
+
+cors:
+  mode: allow-all # allow-all: 放行全部; allow-whitelist
+  whitelist:
+    - allowOrigin: http://127.0.0.1:8080
+      allowHeaders: Content-Type,Authorization
+      allowMethods: POST, GET
+      exposeHeaders: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
+      allowCredentials: true
+
+kafka:
+  producer:
+    - topic: operationRecord
+      address: [127.0.0.1:9092]
+  consumer:
+    - topic: operationRecord
+      address: [127.0.0.1:9092]
+      func: [OperationRecordReportES] # 支持链式调用 eg:[funcA,funcB,funcX]
+
+email:
+  host: "smtp.qq.com"
+  port: 25
+  from: "1124938791@qq.com"
+  nickname: "基础云架构部-研发一组"
+  isSsl: false
+  secret: "bvewllmttezxjehi"
+  topics:
+    - name: warn
+      subject: "告警"
+      to: [xiaohubai@outlook.com]
+
+holmes:
+  path: ./tmp
+  log: ./logs/holmes.log
+  collectInterval: 5s
+  cpu:
+    min: 10
+    diff: 25
+    abs: 80
+    coolDown: 1m
+  mem:
+    min: 30
+    diff: 25
+    abs: 80
+    coolDown: 1m
+  gcheap:
+    min: 10
+    diff: 20
+    abs: 40
+    coolDown: 1m
+  goroutine:
+    min: 500
+    diff: 25
+    abs: 80
+    max: 2000
+    coolDown: 1m

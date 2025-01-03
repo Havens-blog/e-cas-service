@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package api.http.v1;
+
+import "validate/validate.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/Havens-blog/e-cas-service/api/http/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.http.v1";
+
+service HttpService {
+  //性能测试
+  rpc DebugPerf(DebugPerfRequest) returns (DebugPerfResponse) {
+    option (google.api.http) = {
+      post : "/v1/debug/perf"
+      body : "*"
+    };
+  }
+  //登录
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post : "/v1/login"
+      body : "*"
+    };
+  }
+  //获取验证码
+  rpc Captcha(CaptchaRequest) returns (CaptchaResponse) {
+    option (google.api.http) = {
+      get : "/v1/captcha"
+    };
+  }
+  //设置
+  rpc Setting(SettingRequest) returns (SettingResponse) {
+    option (google.api.http) = {
+      get : "/v1/get/setting"
+    };
+  }
+}
+
+message DebugPerfRequest {
+  string text = 1 [ (validate.rules).string.min_len = 6 ];
+}
+
+message DebugPerfResponse {
+  int64 ID = 1;
+  string UID = 2;
+  string userName = 3;
+  string Motto = 4;
+  string text = 5;
+  string createTime = 6;
+  string createUser = 7;
+}
+
+message LoginRequest {
+  //用户名
+  string username = 1 [ (validate.rules).string = {min_len : 3, max_len : 11} ];
+  //密码
+  string password = 2 [ (validate.rules).string.min_len = 6 ];
+  //验证码
+  string captcha = 3 [ (validate.rules).string.len = 6 ];
+  //校验ID
+  string captchaID = 4;
+}
+
+message LoginResponse {
+  int64 ID = 1;
+  string UID = 2;
+  string userName = 3;
+  string nickName = 4;
+  string birth = 5;
+  string avatar = 6;
+  string roleID = 7;
+  string roleName = 8;
+  string phone = 9;
+  string wechat = 10;
+  string email = 11;
+  int32 state = 12;
+  string motto = 13;
+  string token = 18;
+  string refreshToken = 19;
+}
+
+message CaptchaRequest {}
+
+message CaptchaResponse {
+  string captchaID = 1;
+  string picPath = 2;
+  int32 captchaLength = 3;
+}
+
+message MenuRequest {}
+message MenuResponse {
+  string path = 1;
+  string name = 2;
+  string component = 3;
+  string redirect = 4;
+  message Meta {
+    int64 ID = 1;
+    int32 parentID = 2;
+    string roleIDs = 3;
+    string title = 4;
+    string icon = 5;
+    bool hidden = 6;
+    bool keepAlive = 7;
+    int32 sort = 8;
+  }
+  Meta meta = 5;
+  repeated MenuResponse children = 6;
+}
+
+//获取权限列表
+message GetCasbinRequest {
+  string roleIDs = 1;
+  string path = 2;
+  string method = 3;
+  int32 page = 4;
+  int32 pageSize = 5;
+}
+
+message GetCasbinResponse {
+  int64 ID = 1;
+  string roleIDs = 2;
+  string path = 3;
+  string method = 4;
+  string desc = 5;
+}
+//
+message AddTokenBlackRequest { string token = 1; }
+
+message IsTokenBlackkRequest { string token = 1; }
+
+message SettingRequest {
+  string lang = 1;
+  string sideModeColor = 2;
+  bool collapse = 3;                //侧边栏折叠
+  bool breadcrumb = 4;              //面包屑
+  string defaultRouter = 5;         //默认路由
+  string activeTextColor = 6;       //活跃文本颜色
+  string activeBackgroundColor = 7; //活跃文本背景色
+  string UID = 10;
+}
+
+message SettingResponse {
+  int64 ID = 1;
+  string lang = 2;
+  string sideModeColor = 3;
+  bool collapse = 4;                //侧边栏折叠
+  bool breadcrumb = 5;              //面包屑
+  string defaultRouter = 6;         //默认路由
+  string activeTextColor = 7;       //活跃文本颜色
+  string activeBackgroundColor = 8; //活跃文本背景色
+  string UID = 10;
+}
+
+message AddRoleMenuRequest {
+  string component = 1;
+  bool hidden = 2;
+  string icon = 3;
+  bool keepAlive = 4;
+  string name = 5;
+  int32 parentID = 6;
+  string path = 7;
+  string roleIDs = 8;
+  int32 sort = 9;
+  string title = 10;
+  string redirect = 11;
+}
+
+message UpdateRoleMenuRequest {
+  string component = 1;
+  bool hidden = 2;
+  string icon = 3;
+  bool keepAlive = 4;
+  string name = 5;
+  int32 parentID = 6;
+  string path = 7;
+  string roleIDs = 8;
+  int32 sort = 9;
+  string title = 10;
+  int64 ID = 11;
+  string redirect = 12;
+}
+
+message DeleteRoleMenuRequest { int64 ID = 1; }
+
+message AddCasbinRequest {
+  string roleIDs = 1;
+  string path = 2;
+  string method = 3;
+  string desc = 4;
+}
+
+message UpdateCasbinRequest {
+  int64 ID = 1;
+  string roleIDs = 2;
+  string path = 3;
+  string method = 4;
+  string desc = 5;
+}
+
+message DeleteCasbinRequest { int64 ID = 1; }
+
+message GetUserInfoResponse {
+  int64 ID = 1;
+  string UID = 2;
+  string userName = 3;
+  string nickName = 4;
+  string birth = 5;
+  string avatar = 6;
+  string roleID = 7;
+  string roleName = 8;
+  string phone = 9;
+  string wechat = 10;
+  string email = 11;
+  int32 state = 12;
+  string motto = 13;
+}
+
+message UpdateUserInfoRequest {
+  string UID = 1;
+  string nickName = 2;
+  string birth = 3;
+  string phone = 4;
+  string wechat = 5;
+  string email = 6;
+  string motto = 7;
+}
+
+message UpdatePasswordRequest {
+  string UID = 1;
+  string oldPassword = 2;
+  string newPassword = 3;
+}
