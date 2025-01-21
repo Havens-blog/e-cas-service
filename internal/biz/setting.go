@@ -1,23 +1,19 @@
 package biz
 
 import (
-	"errors"
-
+	"github.com/ecodeclub/ginx/gctx"
+	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"
 
 	v1 "github.com/Havens-blog/e-cas-service/api/http/v1"
 	"github.com/Havens-blog/e-cas-service/internal/data/model"
-	"github.com/Havens-blog/e-cas-service/pkg/jwt"
 )
 
 // GetCasbinList 获取权限列表
 func (uc *HttpUsecase) GetSetting(c *gin.Context) (*v1.SettingResponse, error) {
-	claims, ok := c.Get("claims")
-	if !ok {
-		return nil, errors.New("token解析失败")
-	}
-	userInfo := claims.(*jwt.Claims)
-	setting, err := uc.repo.GetSetting(c.Request.Context(), &model.Setting{UID: userInfo.UID})
+	sess, err := session.Get(&gctx.Context{Context: c})
+	uid := sess.Claims().Data["uID"]
+	setting, err := uc.repo.GetSetting(c.Request.Context(), &model.Setting{UID: uid})
 	if err != nil {
 		return nil, err
 	}
@@ -37,14 +33,14 @@ func (uc *HttpUsecase) GetSetting(c *gin.Context) (*v1.SettingResponse, error) {
 
 // SetSetting 设置layout配置
 func (uc *HttpUsecase) UpdateSetting(c *gin.Context, s *v1.SettingRequest) error {
-	claims, ok := c.Get("claims")
-	if !ok {
-		return errors.New("token解析失败")
+	sess, err := session.Get(&gctx.Context{Context: c})
+	if err != nil {
+		return err
 	}
-	userInfo := claims.(*jwt.Claims)
-
+	username := sess.Claims().Data["username"]
+	uid := sess.Claims().Data["uID"]
 	return uc.repo.UpdateSetting(c.Request.Context(), &model.Setting{
-		UID:                   userInfo.UID,
+		UID:                   uid,
 		Lang:                  s.Lang,
 		SideModeColor:         s.SideModeColor,
 		Collapse:              s.Collapse,
@@ -52,6 +48,6 @@ func (uc *HttpUsecase) UpdateSetting(c *gin.Context, s *v1.SettingRequest) error
 		DefaultRouter:         s.DefaultRouter,
 		ActiveTextColor:       s.ActiveTextColor,
 		ActiveBackgroundColor: s.ActiveBackgroundColor,
-		UpdateUser:            userInfo.UserName,
+		UpdateUser:            username,
 	})
 }

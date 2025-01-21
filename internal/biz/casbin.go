@@ -1,7 +1,6 @@
 package biz
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -9,7 +8,6 @@ import (
 	pbAny "github.com/Havens-blog/e-cas-service/api/any/v1"
 	v1 "github.com/Havens-blog/e-cas-service/api/http/v1"
 	"github.com/Havens-blog/e-cas-service/internal/data/model"
-	"github.com/Havens-blog/e-cas-service/pkg/jwt"
 )
 
 // GetCasbinList 获取权限列表
@@ -29,7 +27,6 @@ func (uc *HttpUsecase) GetRoleCasbinList(c *gin.Context, req *v1.GetCasbinReques
 			RoleIDs: v.V0,
 			Path:    v.V1,
 			Method:  v.V2,
-			Desc:    v.Desc,
 		}
 		list = append(list, data)
 	}
@@ -44,36 +41,21 @@ func (uc *HttpUsecase) GetRoleCasbinList(c *gin.Context, req *v1.GetCasbinReques
 
 // AddCasbin 添加权限
 func (uc *HttpUsecase) AddRoleCasbin(c *gin.Context, req *v1.AddCasbinRequest) error {
-	claims, ok := c.Get("claims")
-	if !ok {
-		return errors.New("token解析失败")
-	}
-	userInfo := claims.(*jwt.Claims)
 	return uc.repo.AddRoleCasbin(c.Request.Context(), &model.CasbinRule{
-		Ptype:      "p",
-		V0:         req.RoleIDs,
-		V1:         req.Path,
-		V2:         strings.ToUpper(req.Method),
-		Desc:       req.Desc,
-		CreateUser: userInfo.UserName,
-		UpdateUser: userInfo.UserName,
+		Ptype: "p",
+		V0:    req.RoleIDs,
+		V1:    req.Path,
+		V2:    strings.ToUpper(req.Method),
 	})
 }
 
 // AddCasbin 添加权限
 func (uc *HttpUsecase) UpdateRoleCasbin(c *gin.Context, req *v1.UpdateCasbinRequest) error {
-	claims, ok := c.Get("claims")
-	if !ok {
-		return errors.New("token解析失败")
-	}
-	userInfo := claims.(*jwt.Claims)
 	return uc.repo.UpdateRoleCasbin(c.Request.Context(), &model.CasbinRule{
-		ID:         req.ID,
-		V0:         req.RoleIDs,
-		V1:         req.Path,
-		V2:         strings.ToUpper(req.Method),
-		Desc:       req.Desc,
-		UpdateUser: userInfo.UserName,
+		ID: req.ID,
+		V0: req.RoleIDs,
+		V1: req.Path,
+		V2: strings.ToUpper(req.Method),
 	})
 }
 

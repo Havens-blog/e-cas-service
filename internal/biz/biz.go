@@ -11,26 +11,14 @@ import (
 )
 
 // ProviderSet is biz providers.
-var ProviderSet = wire.NewSet(NewHttpUsecase, NewGrpcUsecase)
-
-type HttpUsecase struct {
-	repo Repo
-	log  *log.Helper
-}
+var ProviderSet = wire.NewSet(NewHttpUsecase, NewGrpcUsecase, NewSysRoleUseCase, NewSysMenuUseCase,
+	NewSysRoleMenuUseCase,
+	NewSysUserUseCase,
+)
 
 type GrpcUsecase struct {
 	repo Repo
 	log  *log.Helper
-}
-
-var repoUsecase *HttpUsecase //暂时没有想到好的办法,解决consumer 依赖 datarepo实例
-
-func NewHttpUsecase(repo Repo, lg log.Logger) *HttpUsecase {
-	repoUsecase = &HttpUsecase{
-		repo: repo,
-		log:  log.NewHelper(lg),
-	}
-	return repoUsecase
 }
 
 func NewGrpcUsecase(repo Repo, lg log.Logger) *GrpcUsecase {
@@ -47,7 +35,7 @@ type Repo interface {
 
 type MysqlInterface interface {
 	ListAllUser(context.Context, *model.User, *pbAny.PageRequest) ([]*model.User, int64, error)
-	FirstUser(context.Context, *model.User) (*model.User, error)
+	FirstUser(context.Context, *model.SysUser) (*model.SysUser, error)
 	UpdateUserInfo(context.Context, *model.User) error
 	UpdatePassword(context.Context, *model.User) error
 

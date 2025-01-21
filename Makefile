@@ -65,7 +65,11 @@ sql:
 # generate configs
 configs:
 	kratos proto client configs/conf/conf.proto
-	rm -rf openapi.yaml
+
+.PHONY: generate
+# generate client code
+generate:
+	go generate cmd/...
 
 # show help
 help:
@@ -85,3 +89,9 @@ help:
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
 .DEFAULT_GOAL := help
+
+#kratos proto add api/user/v1/user.proto
+#kratos proto server api/user/v1/user.proto -t internal/service
+#kratos proto server .\api\http\cas\v1\sysuser.proto -t internal/service
+#
+#

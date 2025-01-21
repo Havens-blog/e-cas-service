@@ -5,19 +5,19 @@ global:
   id: 127.0.0.1
 server:
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8100
     timeout: 1s
   grpc:
-    addr: 0.0.0.0:9000
+    addr: 0.0.0.0:9100
     timeout: 1s
 data:
   mysql:
     driver: mysql
-    source: root:123456@tcp(127.0.0.1:3306)/go-layout?charset=utf8mb4&parseTime=True&loc=Local
+    source: root:password@tcp(127.0.0.1:3306)/kva?charset=utf8mb4&parseTime=True&loc=Local
   redis:
     db: 0
-    addr: 127.0.0.1:6379
-    password: "123456"
+    addr: 127.0.0.1:16379
+    password: ""
     dialTimeout: 1s
     readTimeout: 0.4s
     writeTimeout: 0.6s
@@ -27,15 +27,15 @@ data:
     password: 1qaz!QAZ
 
 jwt:
-  signingKey: some_jwt_sign_key
+  signingKey: hijbcdefgklmna2324
   expiresTime: 604800
   bufferTime: 86400
-  issuer: xiaohubai@outlook.com
+  issuer: chengyinghao@sz-jlc.com
 trace:
-  endpoint: http://127.0.0.1:14268/api/traces
+  endpoint: http://43.138.170.150:14268/api/traces
 
 consul:
-  host: 127.0.0.1:8500
+  host: 43.138.170.150:8500
   scheme: http
   healthCheck: true
   token: "8501f1da-ad0f-401c-9694-6ac1f8ff1fc4"
@@ -78,23 +78,23 @@ cors:
 kafka:
   producer:
     - topic: operationRecord
-      address: [127.0.0.1:9092]
+      address: [43.138.170.150:9094]
   consumer:
     - topic: operationRecord
-      address: [127.0.0.1:9092]
+      address: [43.138.170.150:9094]
       func: [OperationRecordReportES] # 支持链式调用 eg:[funcA,funcB,funcX]
 
 email:
-  host: "smtp.qq.com"
+  host: "smtp.exmail.qq.com"
   port: 25
-  from: "1124938791@qq.com"
+  from: "Jlc-opplatform@sz-jlc.com"
   nickname: "基础云架构部-研发一组"
   isSsl: false
-  secret: "bvewllmttezxjehi"
+  secret: "hc@12QW.12"
   topics:
     - name: warn
       subject: "告警"
-      to: [xiaohubai@outlook.com]
+      to: [chengyinghao@sz-jlc.com]
 
 holmes:
   path: ./tmp
@@ -121,3 +121,6 @@ holmes:
     abs: 80
     max: 2000
     coolDown: 1m
+
+session:
+  session_encrypted_key: "1234567890"

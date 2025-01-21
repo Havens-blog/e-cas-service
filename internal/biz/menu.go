@@ -3,6 +3,8 @@ package biz
 import (
 	"context"
 	"errors"
+	"github.com/ecodeclub/ginx/gctx"
+	"github.com/ecodeclub/ginx/session"
 
 	"github.com/gin-gonic/gin"
 
@@ -22,12 +24,12 @@ func (uc *HttpUsecase) GetAllMenuList(c *gin.Context) ([]*v1.MenuResponse, error
 
 // GetRoleMenuList 获取角色路由列表
 func (uc *HttpUsecase) GetRoleMenuList(c *gin.Context) ([]*v1.MenuResponse, error) {
-	claims, ok := c.Get("claims")
-	if !ok {
-		return nil, errors.New("token解析失败")
+	sess, err := session.Get(&gctx.Context{Context: c})
+	if err != nil {
+		return nil, err
 	}
-	userInfo := claims.(*jwt.Claims)
-	menuList, err := uc.repo.ListRoleMenu(c.Request.Context(), &model.Menu{RoleIDGroup: userInfo.RoleID})
+	roleID := sess.Claims().Data["roleID"]
+	menuList, err := uc.repo.ListRoleMenu(c.Request.Context(), &model.Menu{RoleIDGroup: roleID})
 	if err != nil {
 		return nil, err
 	}

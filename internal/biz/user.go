@@ -1,37 +1,50 @@
 package biz
 
 import (
+	"github.com/go-kratos/kratos/v2/log"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel/attribute"
 
 	v1 "github.com/Havens-blog/e-cas-service/api/http/v1"
-	"github.com/Havens-blog/e-cas-service/internal/consts"
 	"github.com/Havens-blog/e-cas-service/internal/data/model"
 	pJwt "github.com/Havens-blog/e-cas-service/pkg/jwt"
 	"github.com/Havens-blog/e-cas-service/pkg/tracing"
 	"github.com/Havens-blog/e-cas-service/pkg/utils"
 )
 
+var repoUsecase *HttpUsecase //暂时没有想到好的办法,解决consumer 依赖 datarepo实例
+
+type HttpUsecase struct {
+	repo Repo
+	log  *log.Helper
+}
+
+func NewHttpUsecase(repo Repo, lg log.Logger) *HttpUsecase {
+	repoUsecase = &HttpUsecase{
+		repo: repo,
+		log:  log.NewHelper(lg),
+	}
+	return repoUsecase
+}
+
 // Login 用户登录
 func (uc *HttpUsecase) Login(c *gin.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
 	ctx, span := tracing.NewSpan(c.Request.Context(), "biz-Login")
 	defer span.End()
 
-	userInfo, err := uc.repo.FirstUser(ctx, &model.User{Username: req.Username})
+	userInfo, err := uc.repo.FirstUser(ctx, &model.SysUser{Username: req.Username})
 	if err != nil {
 		return nil, err
 	}
 
-	if userInfo.Password != utils.Md5([]byte(req.Password+userInfo.Salt)) {
+	if utils.BcryptCheck(req.Password, userInfo.Password) == false {
 		return nil, errors.New("密码错误")
 	}
-
-	token, err := pJwt.Create(pJwt.Claims{
+	/*token, err := pJwt.Create(pJwt.Claims{
 		UID:        userInfo.UID,
 		UserName:   userInfo.Username,
 		Phone:      userInfo.Phone,
@@ -47,25 +60,22 @@ func (uc *HttpUsecase) Login(c *gin.Context, req *v1.LoginRequest) (*v1.LoginRes
 	})
 	if err != nil {
 		return nil, errors.New("生成token失败")
-	}
+	}*/
 
 	span.SetAttributes(attribute.Key("userList").String(cast.ToString(userInfo)))
 	res := &v1.LoginResponse{
-		ID:           userInfo.ID,
-		UID:          userInfo.UID,
-		UserName:     userInfo.Username,
-		NickName:     userInfo.Nickname,
-		Birth:        userInfo.Birth.Local().Format("2006-01-02"),
-		Avatar:       userInfo.Avatar,
-		RoleID:       userInfo.RoleID,
-		RoleName:     userInfo.RoleName,
-		Phone:        userInfo.Phone,
-		Wechat:       userInfo.Wechat,
-		Email:        userInfo.Email,
-		State:        userInfo.State,
-		Motto:        userInfo.Motto,
-		Token:        token,
-		RefreshToken: token,
+		ID:       userInfo.ID,
+		UID:      userInfo.UUID,
+		UserName: userInfo.Username,
+		NickName: userInfo.NickName,
+		Birth:    "",
+		Avatar:   userInfo.Avatar,
+		RoleName: userInfo.RoleIds,
+		Phone:    userInfo.Phone,
+		Email:    userInfo.Email,
+
+		Token:        "",
+		RefreshToken: "",
 	}
 	return res, nil
 }
@@ -78,24 +88,16 @@ func (uc *HttpUsecase) GetUserInfo(c *gin.Context) (*v1.GetUserInfoResponse, err
 	}
 	userInfo := claims.(*pJwt.Claims)
 
-	u, err := uc.repo.FirstUser(c.Request.Context(), &model.User{UID: userInfo.UID})
+	u, err := uc.repo.FirstUser(c.Request.Context(), &model.SysUser{UUID: userInfo.UID})
 	if err != nil {
 		return nil, err
 	}
 	res := &v1.GetUserInfoResponse{
 		ID:       u.ID,
-		UID:      u.UID,
 		UserName: u.Username,
-		NickName: u.Nickname,
-		Birth:    u.Birth.Local().Format("2006-01-02"),
 		Avatar:   u.Avatar,
-		RoleID:   u.RoleID,
-		RoleName: u.RoleName,
 		Phone:    u.Phone,
-		Wechat:   u.Wechat,
 		Email:    u.Email,
-		State:    u.State,
-		Motto:    u.Motto,
 	}
 	return res, nil
 }
@@ -116,7 +118,7 @@ func (uc *HttpUsecase) UpdateUserInfo(c *gin.Context, req *v1.UpdateUserInfoRequ
 
 // Login 用户登录
 func (uc *HttpUsecase) UpdatePassword(c *gin.Context, req *v1.UpdatePasswordRequest) error {
-	u, err := uc.repo.FirstUser(c.Request.Context(), &model.User{UID: req.UID})
+	u, err := uc.repo.FirstUser(c.Request.Context(), &model.SysUser{UUID: req.UID})
 	if err != nil {
 		return err
 	}

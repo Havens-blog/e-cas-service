@@ -12,13 +12,13 @@ func (d *dataRepo) ListAllUser(ctx context.Context, u *model.User, p *pbAny.Page
 	return
 }
 
-func (d *dataRepo) FirstUser(ctx context.Context, u *model.User) (users *model.User, err error) {
-	db := d.data.db.User.WithContext(ctx)
+func (d *dataRepo) FirstUser(ctx context.Context, u *model.SysUser) (users *model.SysUser, err error) {
+	db := d.data.db.SysUser.WithContext(ctx)
 	if u.Username != "" {
-		db = db.Where(d.data.db.User.Username.Eq(u.Username))
+		db = db.Where(d.data.db.SysUser.Username.Eq(u.Username))
 	}
-	if u.UID != "" {
-		db = db.Where(d.data.db.User.UID.Eq(u.UID))
+	if u.UUID != "" {
+		db = db.Where(d.data.db.SysUser.UUID.Eq(u.UUID))
 	}
 	users, err = db.First()
 	return

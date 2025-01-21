@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"fmt"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
@@ -20,12 +19,21 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewDataRepo)
+var ProviderSet = wire.NewSet(
+	NewData,
+	NewDataRepo,
+	NewSysRoleRepo,
+	NewSysMenuRepo,
+	NewSysRoleMenuRepo,
+	NewSysUserRepo,
+)
 
 type dataRepo struct {
 	data *Data
 	log  *log.Helper
 }
+
+type contextTxKey struct{}
 
 func NewDataRepo(d *Data, lg log.Logger) biz.Repo {
 	return &dataRepo{
@@ -37,7 +45,7 @@ func NewDataRepo(d *Data, lg log.Logger) biz.Repo {
 // Data .
 type Data struct {
 	db  *gen.Query
-	rdb *redis.Client
+	rdb redis.Cmdable //*redis.Client
 	es  *elasticsearch.Client
 }
 
@@ -69,12 +77,20 @@ func NewData(c *conf.Data, logg log.Logger) (*Data, error) {
 	if err := AutoMigrate(db); err != nil {
 		return nil, fmt.Errorf("autoMigrate failed: %s", err)
 	}
+	var rdb *redis.Client
+	if c.Redis.Password == "" {
+		rdb = redis.NewClient(&redis.Options{
+			Addr: c.Redis.Addr,
+			DB:   int(c.Redis.Db),
+		})
+	} else {
+		rdb = redis.NewClient(&redis.Options{
+			Addr:     c.Redis.Addr,
+			Password: c.Redis.Password,
+			DB:       int(c.Redis.Db),
+		})
+	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     c.Redis.Addr,
-		Password: c.Redis.Password,
-		DB:       int(c.Redis.Db),
-	})
 	_, err = rdb.Ping(context.Background()).Result()
 	if err != nil {
 		return nil, fmt.Errorf("redis connect ping failed: %s", err)
@@ -91,6 +107,7 @@ func NewData(c *conf.Data, logg log.Logger) (*Data, error) {
 
 	consts.DB = db
 	consts.RDB = rdb
+	consts.Rdb = rdb
 	consts.ES = es
 	return &Data{db: gen.Use(db), rdb: rdb, es: es}, nil
 }
@@ -100,4 +117,28 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 	return nil
+}
+
+func (d *Data) Query(ctx context.Context) *gen.Query {
+	tx, ok := ctx.Value(contextTxKey{}).(*gen.Query)
+	if ok {
+		return tx
+	}
+	return d.db
+}
+
+func buildLikeValue(key string) string {
+	return fmt.Sprintf("%%%s%%", key)
+}
+
+func convertPageSize(page, size int32) (limit, offset int) {
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 {
+		size = 10
+	}
+	limit = int(size)
+	offset = int((page - 1) * size)
+	return
 }

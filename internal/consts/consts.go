@@ -53,6 +53,7 @@ var (
 	ES    *elasticsearch.Client
 	Conf  *conf.Conf
 	Viper *viper.Viper
+	Rdb   redis.Cmdable
 )
 
 var (

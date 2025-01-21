@@ -54,7 +54,7 @@ func NewApp() *kratos.App {
 		panic("load holmes failed")
 	}
 
-	app, err := wireApp(cc.Server, cc.Data, cc.Consul, cc.Global, logger)
+	app, err := wireApp(cc.Server, cc.Data, cc.Consul, cc.Global, cc.Session, logger)
 	if err != nil {
 		panic(err)
 	}

@@ -18,6 +18,7 @@ message Conf {
   Kafka kafka = 12;
   Email email = 13;
   Holmes holmes = 14;
+  Session session = 15;
 }
 
 message Global {
@@ -184,3 +185,5 @@ message Holmes {
   GCHeap gCHeap = 6;
   Goroutine goroutine = 7;
 }
+
+message Session { string session_encrypted_key = 1; }

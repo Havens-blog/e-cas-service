@@ -1,6 +1,8 @@
 package server
 
 import (
+	"github.com/ecodeclub/ginx/session"
+	ginRedis "github.com/ecodeclub/ginx/session/redis"
 	hhttp "net/http"
 
 	"github.com/gin-contrib/pprof"
@@ -8,11 +10,11 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/http"
 
+	"github.com/Havens-blog/e-cas-service/configs/conf"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/Havens-blog/e-cas-service/configs/conf"
 
 	"github.com/Havens-blog/e-cas-service/internal/consts"
 	"github.com/Havens-blog/e-cas-service/internal/service"
@@ -20,7 +22,11 @@ import (
 )
 
 // NewHTTPServer new a HTTP server.
-func NewHTTPServer(c *conf.Server, s *service.HttpService, lg log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, cs *conf.Session, s *service.HttpService,
+	role *service.RolesService,
+	menu *service.MenusService,
+	user *service.SysuserService,
+	lg log.Logger) *http.Server {
 	var opts = []http.ServerOption{}
 	if c.Http.Network != "" {
 		opts = append(opts, http.Network(c.Http.Network))
@@ -33,11 +39,19 @@ func NewHTTPServer(c *conf.Server, s *service.HttpService, lg log.Logger) *http.
 	}
 
 	srv := http.NewServer(opts...)
-	srv.HandlePrefix("/", routers(s))
+	// session
+	sp := ginRedis.NewSessionProvider(consts.Rdb, cs.SessionEncryptedKey)
+
+	srv.HandlePrefix("/", routers(s, role, menu, user, sp, lg))
+
 	return srv
 }
 
-func routers(s *service.HttpService) *gin.Engine {
+func routers(s *service.HttpService, role *service.RolesService,
+	menu *service.MenusService,
+	user *service.SysuserService,
+	sp session.Provider, lg log.Logger) *gin.Engine {
+	session.SetDefaultProvider(sp)
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(m.Recovery(), m.Cors(consts.Conf.Cors), m.Tracing(consts.Conf.Global), m.Metrics(consts.Conf.Global))
@@ -48,12 +62,28 @@ func routers(s *service.HttpService) *gin.Engine {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	}
-	r1 := router.Group("")
+	r1 := router.Group("/api/cas/")
 	{
 		r1.POST("/v1/login", s.Login)    //登录
 		r1.GET("/v1/captcha", s.Captcha) //获取验证码
 	}
-	r2 := router.Group("").Use(m.Jwt(), m.Casbin(), m.Limiter(), m.Operation())
+
+	// 角色管理
+	{
+		r1.POST("/v1/system/role/", role.GetRoles)
+		r1.POST("/v1/system/role/list", role.ListRoles)
+	}
+	// 权限管理
+	{
+		r1.POST("/v1/system/menu/", menu.CreateMenus)
+		r1.GET("/v1/system/menu/", menu.GetMenus)
+		r1.DELETE("/v1/system/menu/", menu.DeleteMenus)
+
+		r1.GET("/v1/system/user/auth", user.Auth)
+	}
+	router.Use(session.CheckLoginMiddleware())
+	r2 := router.Group("/api/cas/").Use(m.CasbinV1(sp, lg), m.Limiter(), m.OperationV1(sp))
+	//r2 := router.Group("").Use(m.Jwt(), m.Casbin(), m.Limiter(), m.Operation())
 	{
 		r2.POST("/v1/debug/perf", s.DebugPerf)         //性能测试
 		r2.GET("/v1/get/setting", s.GetSetting)        //获取模板设置

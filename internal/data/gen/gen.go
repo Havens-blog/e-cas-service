@@ -15,37 +15,175 @@ import (
 	"gorm.io/plugin/dbresolver"
 )
 
+var (
+	Q                       = new(Query)
+	CasbinRule              *casbinRule
+	CloudHost               *cloudHost
+	CloudProviderRegionsTbl *cloudProviderRegionsTbl
+	CloudaccountsTbl        *cloudaccountsTbl
+	CloudprovidersTbl       *cloudprovidersTbl
+	CloudregionsTbl         *cloudregionsTbl
+	GuestsTbl               *guestsTbl
+	HostsTbl                *hostsTbl
+	JwtBlacklist            *jwtBlacklist
+	LogJob                  *logJob
+	LogLogin                *logLogin
+	LogOper                 *logOper
+	ServerskusTbl           *serverskusTbl
+	SysAPI                  *sysAPI
+	SysDept                 *sysDept
+	SysDictDatum            *sysDictDatum
+	SysDictType             *sysDictType
+	SysDiscovery            *sysDiscovery
+	SysJob                  *sysJob
+	SysMenu                 *sysMenu
+	SysMenuBtn              *sysMenuBtn
+	SysPost                 *sysPost
+	SysRole                 *sysRole
+	SysRoleBtn              *sysRoleBtn
+	SysRoleDept             *sysRoleDept
+	SysRoleMenu             *sysRoleMenu
+	SysUser                 *sysUser
+	ZonesTbl                *zonesTbl
+)
+
+func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
+	*Q = *Use(db, opts...)
+	CasbinRule = &Q.CasbinRule
+	CloudHost = &Q.CloudHost
+	CloudProviderRegionsTbl = &Q.CloudProviderRegionsTbl
+	CloudaccountsTbl = &Q.CloudaccountsTbl
+	CloudprovidersTbl = &Q.CloudprovidersTbl
+	CloudregionsTbl = &Q.CloudregionsTbl
+	GuestsTbl = &Q.GuestsTbl
+	HostsTbl = &Q.HostsTbl
+	JwtBlacklist = &Q.JwtBlacklist
+	LogJob = &Q.LogJob
+	LogLogin = &Q.LogLogin
+	LogOper = &Q.LogOper
+	ServerskusTbl = &Q.ServerskusTbl
+	SysAPI = &Q.SysAPI
+	SysDept = &Q.SysDept
+	SysDictDatum = &Q.SysDictDatum
+	SysDictType = &Q.SysDictType
+	SysDiscovery = &Q.SysDiscovery
+	SysJob = &Q.SysJob
+	SysMenu = &Q.SysMenu
+	SysMenuBtn = &Q.SysMenuBtn
+	SysPost = &Q.SysPost
+	SysRole = &Q.SysRole
+	SysRoleBtn = &Q.SysRoleBtn
+	SysRoleDept = &Q.SysRoleDept
+	SysRoleMenu = &Q.SysRoleMenu
+	SysUser = &Q.SysUser
+	ZonesTbl = &Q.ZonesTbl
+}
+
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
-		db:         db,
-		CasbinRule: newCasbinRule(db, opts...),
-		DebugPerf:  newDebugPerf(db, opts...),
-		Menu:       newMenu(db, opts...),
-		Setting:    newSetting(db, opts...),
-		User:       newUser(db, opts...),
+		db:                      db,
+		CasbinRule:              newCasbinRule(db, opts...),
+		CloudHost:               newCloudHost(db, opts...),
+		CloudProviderRegionsTbl: newCloudProviderRegionsTbl(db, opts...),
+		CloudaccountsTbl:        newCloudaccountsTbl(db, opts...),
+		CloudprovidersTbl:       newCloudprovidersTbl(db, opts...),
+		CloudregionsTbl:         newCloudregionsTbl(db, opts...),
+		GuestsTbl:               newGuestsTbl(db, opts...),
+		HostsTbl:                newHostsTbl(db, opts...),
+		JwtBlacklist:            newJwtBlacklist(db, opts...),
+		LogJob:                  newLogJob(db, opts...),
+		LogLogin:                newLogLogin(db, opts...),
+		LogOper:                 newLogOper(db, opts...),
+		ServerskusTbl:           newServerskusTbl(db, opts...),
+		SysAPI:                  newSysAPI(db, opts...),
+		SysDept:                 newSysDept(db, opts...),
+		SysDictDatum:            newSysDictDatum(db, opts...),
+		SysDictType:             newSysDictType(db, opts...),
+		SysDiscovery:            newSysDiscovery(db, opts...),
+		SysJob:                  newSysJob(db, opts...),
+		SysMenu:                 newSysMenu(db, opts...),
+		SysMenuBtn:              newSysMenuBtn(db, opts...),
+		SysPost:                 newSysPost(db, opts...),
+		SysRole:                 newSysRole(db, opts...),
+		SysRoleBtn:              newSysRoleBtn(db, opts...),
+		SysRoleDept:             newSysRoleDept(db, opts...),
+		SysRoleMenu:             newSysRoleMenu(db, opts...),
+		SysUser:                 newSysUser(db, opts...),
+		ZonesTbl:                newZonesTbl(db, opts...),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
-
-	CasbinRule casbinRule
-	DebugPerf  debugPerf
-	Menu       menu
-	Setting    setting
-	User       user
+	//
+	User                     user
+	DebugPerf               debugPerf
+	Menu               menu
+	Setting      setting
+	//
+	CasbinRule              casbinRule
+	CloudHost               cloudHost
+	CloudProviderRegionsTbl cloudProviderRegionsTbl
+	CloudaccountsTbl        cloudaccountsTbl
+	CloudprovidersTbl       cloudprovidersTbl
+	CloudregionsTbl         cloudregionsTbl
+	GuestsTbl               guestsTbl
+	HostsTbl                hostsTbl
+	JwtBlacklist            jwtBlacklist
+	LogJob                  logJob
+	LogLogin                logLogin
+	LogOper                 logOper
+	ServerskusTbl           serverskusTbl
+	SysAPI                  sysAPI
+	SysDept                 sysDept
+	SysDictDatum            sysDictDatum
+	SysDictType             sysDictType
+	SysDiscovery            sysDiscovery
+	SysJob                  sysJob
+	SysMenu                 sysMenu
+	SysMenuBtn              sysMenuBtn
+	SysPost                 sysPost
+	SysRole                 sysRole
+	SysRoleBtn              sysRoleBtn
+	SysRoleDept             sysRoleDept
+	SysRoleMenu             sysRoleMenu
+	SysUser                 sysUser
+	ZonesTbl                zonesTbl
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:         db,
-		CasbinRule: q.CasbinRule.clone(db),
-		DebugPerf:  q.DebugPerf.clone(db),
-		Menu:       q.Menu.clone(db),
-		Setting:    q.Setting.clone(db),
-		User:       q.User.clone(db),
+		db:                      db,
+		CasbinRule:              q.CasbinRule.clone(db),
+		CloudHost:               q.CloudHost.clone(db),
+		CloudProviderRegionsTbl: q.CloudProviderRegionsTbl.clone(db),
+		CloudaccountsTbl:        q.CloudaccountsTbl.clone(db),
+		CloudprovidersTbl:       q.CloudprovidersTbl.clone(db),
+		CloudregionsTbl:         q.CloudregionsTbl.clone(db),
+		GuestsTbl:               q.GuestsTbl.clone(db),
+		HostsTbl:                q.HostsTbl.clone(db),
+		JwtBlacklist:            q.JwtBlacklist.clone(db),
+		LogJob:                  q.LogJob.clone(db),
+		LogLogin:                q.LogLogin.clone(db),
+		LogOper:                 q.LogOper.clone(db),
+		ServerskusTbl:           q.ServerskusTbl.clone(db),
+		SysAPI:                  q.SysAPI.clone(db),
+		SysDept:                 q.SysDept.clone(db),
+		SysDictDatum:            q.SysDictDatum.clone(db),
+		SysDictType:             q.SysDictType.clone(db),
+		SysDiscovery:            q.SysDiscovery.clone(db),
+		SysJob:                  q.SysJob.clone(db),
+		SysMenu:                 q.SysMenu.clone(db),
+		SysMenuBtn:              q.SysMenuBtn.clone(db),
+		SysPost:                 q.SysPost.clone(db),
+		SysRole:                 q.SysRole.clone(db),
+		SysRoleBtn:              q.SysRoleBtn.clone(db),
+		SysRoleDept:             q.SysRoleDept.clone(db),
+		SysRoleMenu:             q.SysRoleMenu.clone(db),
+		SysUser:                 q.SysUser.clone(db),
+		ZonesTbl:                q.ZonesTbl.clone(db),
 	}
 }
 
@@ -59,30 +197,99 @@ func (q *Query) WriteDB() *Query {
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
-		db:         db,
-		CasbinRule: q.CasbinRule.replaceDB(db),
-		DebugPerf:  q.DebugPerf.replaceDB(db),
-		Menu:       q.Menu.replaceDB(db),
-		Setting:    q.Setting.replaceDB(db),
-		User:       q.User.replaceDB(db),
+		db:                      db,
+		CasbinRule:              q.CasbinRule.replaceDB(db),
+		CloudHost:               q.CloudHost.replaceDB(db),
+		CloudProviderRegionsTbl: q.CloudProviderRegionsTbl.replaceDB(db),
+		CloudaccountsTbl:        q.CloudaccountsTbl.replaceDB(db),
+		CloudprovidersTbl:       q.CloudprovidersTbl.replaceDB(db),
+		CloudregionsTbl:         q.CloudregionsTbl.replaceDB(db),
+		GuestsTbl:               q.GuestsTbl.replaceDB(db),
+		HostsTbl:                q.HostsTbl.replaceDB(db),
+		JwtBlacklist:            q.JwtBlacklist.replaceDB(db),
+		LogJob:                  q.LogJob.replaceDB(db),
+		LogLogin:                q.LogLogin.replaceDB(db),
+		LogOper:                 q.LogOper.replaceDB(db),
+		ServerskusTbl:           q.ServerskusTbl.replaceDB(db),
+		SysAPI:                  q.SysAPI.replaceDB(db),
+		SysDept:                 q.SysDept.replaceDB(db),
+		SysDictDatum:            q.SysDictDatum.replaceDB(db),
+		SysDictType:             q.SysDictType.replaceDB(db),
+		SysDiscovery:            q.SysDiscovery.replaceDB(db),
+		SysJob:                  q.SysJob.replaceDB(db),
+		SysMenu:                 q.SysMenu.replaceDB(db),
+		SysMenuBtn:              q.SysMenuBtn.replaceDB(db),
+		SysPost:                 q.SysPost.replaceDB(db),
+		SysRole:                 q.SysRole.replaceDB(db),
+		SysRoleBtn:              q.SysRoleBtn.replaceDB(db),
+		SysRoleDept:             q.SysRoleDept.replaceDB(db),
+		SysRoleMenu:             q.SysRoleMenu.replaceDB(db),
+		SysUser:                 q.SysUser.replaceDB(db),
+		ZonesTbl:                q.ZonesTbl.replaceDB(db),
 	}
 }
 
 type queryCtx struct {
-	CasbinRule *casbinRuleDo
-	DebugPerf  *debugPerfDo
-	Menu       *menuDo
-	Setting    *settingDo
-	User       *userDo
+	CasbinRule              *casbinRuleDo
+	CloudHost               *cloudHostDo
+	CloudProviderRegionsTbl *cloudProviderRegionsTblDo
+	CloudaccountsTbl        *cloudaccountsTblDo
+	CloudprovidersTbl       *cloudprovidersTblDo
+	CloudregionsTbl         *cloudregionsTblDo
+	GuestsTbl               *guestsTblDo
+	HostsTbl                *hostsTblDo
+	JwtBlacklist            *jwtBlacklistDo
+	LogJob                  *logJobDo
+	LogLogin                *logLoginDo
+	LogOper                 *logOperDo
+	ServerskusTbl           *serverskusTblDo
+	SysAPI                  *sysAPIDo
+	SysDept                 *sysDeptDo
+	SysDictDatum            *sysDictDatumDo
+	SysDictType             *sysDictTypeDo
+	SysDiscovery            *sysDiscoveryDo
+	SysJob                  *sysJobDo
+	SysMenu                 *sysMenuDo
+	SysMenuBtn              *sysMenuBtnDo
+	SysPost                 *sysPostDo
+	SysRole                 *sysRoleDo
+	SysRoleBtn              *sysRoleBtnDo
+	SysRoleDept             *sysRoleDeptDo
+	SysRoleMenu             *sysRoleMenuDo
+	SysUser                 *sysUserDo
+	ZonesTbl                *zonesTblDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		CasbinRule: q.CasbinRule.WithContext(ctx),
-		DebugPerf:  q.DebugPerf.WithContext(ctx),
-		Menu:       q.Menu.WithContext(ctx),
-		Setting:    q.Setting.WithContext(ctx),
-		User:       q.User.WithContext(ctx),
+		CasbinRule:              q.CasbinRule.WithContext(ctx),
+		CloudHost:               q.CloudHost.WithContext(ctx),
+		CloudProviderRegionsTbl: q.CloudProviderRegionsTbl.WithContext(ctx),
+		CloudaccountsTbl:        q.CloudaccountsTbl.WithContext(ctx),
+		CloudprovidersTbl:       q.CloudprovidersTbl.WithContext(ctx),
+		CloudregionsTbl:         q.CloudregionsTbl.WithContext(ctx),
+		GuestsTbl:               q.GuestsTbl.WithContext(ctx),
+		HostsTbl:                q.HostsTbl.WithContext(ctx),
+		JwtBlacklist:            q.JwtBlacklist.WithContext(ctx),
+		LogJob:                  q.LogJob.WithContext(ctx),
+		LogLogin:                q.LogLogin.WithContext(ctx),
+		LogOper:                 q.LogOper.WithContext(ctx),
+		ServerskusTbl:           q.ServerskusTbl.WithContext(ctx),
+		SysAPI:                  q.SysAPI.WithContext(ctx),
+		SysDept:                 q.SysDept.WithContext(ctx),
+		SysDictDatum:            q.SysDictDatum.WithContext(ctx),
+		SysDictType:             q.SysDictType.WithContext(ctx),
+		SysDiscovery:            q.SysDiscovery.WithContext(ctx),
+		SysJob:                  q.SysJob.WithContext(ctx),
+		SysMenu:                 q.SysMenu.WithContext(ctx),
+		SysMenuBtn:              q.SysMenuBtn.WithContext(ctx),
+		SysPost:                 q.SysPost.WithContext(ctx),
+		SysRole:                 q.SysRole.WithContext(ctx),
+		SysRoleBtn:              q.SysRoleBtn.WithContext(ctx),
+		SysRoleDept:             q.SysRoleDept.WithContext(ctx),
+		SysRoleMenu:             q.SysRoleMenu.WithContext(ctx),
+		SysUser:                 q.SysUser.WithContext(ctx),
+		ZonesTbl:                q.ZonesTbl.WithContext(ctx),
 	}
 }
 
@@ -91,14 +298,10 @@ func (q *Query) Transaction(fc func(tx *Query) error, opts ...*sql.TxOptions) er
 }
 
 func (q *Query) Begin(opts ...*sql.TxOptions) *QueryTx {
-	tx := q.db.Begin(opts...)
-	return &QueryTx{Query: q.clone(tx), Error: tx.Error}
+	return &QueryTx{q.clone(q.db.Begin(opts...))}
 }
 
-type QueryTx struct {
-	*Query
-	Error error
-}
+type QueryTx struct{ *Query }
 
 func (q *QueryTx) Commit() error {
 	return q.db.Commit().Error
